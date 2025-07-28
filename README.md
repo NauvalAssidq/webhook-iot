@@ -1,228 +1,254 @@
-# Production-Ready Blog/News API Backend
+# Production-Ready Blog & News API Backend
 
-A complete, robust, and scalable headless backend for a blog, news site, or any content-driven application. Built with **Node.js**, **Express**, and **MongoDB**, and fully containerized with **Docker**.
+A complete, robust, and scalable headless backend for a blog, news site, or any content-driven application. Built with **Node.js**, **Express**, and **MongoDB**, and fully containerized with **Docker** for easy development and deployment.
 
-This project is designed to be the "engine" for your content platform, allowing you to focus on building a beautiful frontend without worrying about the backend complexities.
-
----
-
-## ✨ Features
-
-### ✅ Full Authentication
-
-* Standard user registration (email & password).
-* Secure login with password hashing (`bcryptjs`).
-* Stateless authentication using JSON Web Tokens (JWT).
-* Seamless Google OAuth 2.0 integration.
-
-### ✅ Complete Article Management (CRUD)
-
-* Create, Read, Update, and Delete articles.
-* Admin-only restrictions on all content creation and modification.
-
-### ✅ Advanced Content Features
-
-* **Multilingual Support:** Database schema is ready for English (`en`) and Indonesian (`id`) content.
-* **Automated & Unique Slug Generation:** SEO-friendly URLs are created automatically from article titles.
-* **Smart View Counting:** Tracks article views using cookies to prevent spam.
-* **Powerful Filtering:** Fetch articles by tag, featured status, and more.
-* **Flexible Sorting:** Sort articles by creation date or view count.
-
-### ✅ Secure Media Uploads
-
-* API endpoint to generate secure, temporary presigned URLs for direct file uploads to AWS S3.
-
-### ✅ Robust & Secure
-
-* Input Validation: All incoming data is validated to prevent errors and bad data.
-* Security Hardening: Uses `helmet` for secure headers and `express-rate-limit` to prevent brute-force attacks.
-
-### ✅ Containerized
-
-* Comes with a multi-stage Dockerfile for creating small, efficient, and secure production images.
-* Includes a `docker-compose.yml` file for easy, one-command local development.
+This project is designed to be the "engine" for your content platform, providing a secure and feature-rich API that allows you to focus on building a beautiful frontend without worrying about backend complexities.
 
 ---
 
-## 🛠️ Tech Stack
+## Features
+
+### Full Authentication
+
+* Standard user registration (email & password)
+* Secure login with password hashing (`bcryptjs`)
+* Stateless authentication using JSON Web Tokens (JWT)
+* Seamless Google OAuth 2.0 integration
+
+### Complete Article Management (CRUD)
+
+* Create, Read, Update, and Delete articles
+* Admin-only restrictions on content creation and modification
+
+### Full User Management (CRUD)
+
+* Admin-only endpoints to get all users
+* Update user roles (e.g., promote to admin)
+* Delete users
+
+### Advanced Content Features
+
+* Multilingual support (English `en`, Indonesian `id`)
+* Automated & unique slug generation for SEO-friendly URLs
+* Smart view counting with cookie-based spam prevention
+* Powerful filtering: by tag, featured status, etc.
+* Flexible sorting: by creation date or view count
+
+### Secure Media Uploads
+
+* Endpoint to generate temporary presigned URLs for direct AWS S3 uploads
+
+### Robust & Secure (Production-Ready)
+
+* Input validation using `express-validator`
+* Security hardening with `helmet` and `express-rate-limit`
+* Performance optimization with `compression`
+
+### Containerized
+
+* Multi-stage Dockerfile for efficient production images
+
+---
+
+## Technology Stack
 
 * **Backend:** Node.js, Express.js
 * **Database:** MongoDB with Mongoose
-* **Authentication:** Passport.js (Google OAuth), JWT
+* **Authentication:** Passport.js (Google OAuth), JWT, bcryptjs
 * **File Storage:** AWS S3
-* **Containerization:** Docker, Docker Compose
+* **Containerization:** Docker
+* **Security & Validation:** Helmet, Express Rate Limit, Express Validator
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 Follow these steps to get the backend running on your local machine for development.
 
 ### Prerequisites
 
 * Node.js (v18 or later)
-* Docker and Docker Compose
-* An active MongoDB Atlas account (free tier is sufficient)
-* An active AWS Account with S3 configured (free tier is sufficient)
-* Google OAuth 2.0 credentials from the Google Cloud Console
+* Docker installed and running
+* MongoDB Atlas account (free tier is sufficient)
+* AWS account with an S3 bucket and IAM user configured
+* Google OAuth 2.0 credentials
 
 ### Installation
 
-1. Clone the repository:
+#### 1. Clone the repository:
 
-   ```bash
-   git clone <your-repo-url>
-   cd blog-project
-   ```
+```bash
+git clone https://github.com/NauvalAssidq/express-blog-api.git
+cd express-blog-api
+```
 
-2. Set up your Environment Variables:
+#### 2. Set up environment variables:
 
-   ```bash
-   cd back-end
-   cp .env.example .env
-   ```
+```bash
+cp .env.example .env
+```
 
-   Now open `.env` and fill in all the required values (MongoDB URI, Google keys, AWS keys, etc.).
+Fill in all required values in `.env` (MongoDB URI, Google keys, AWS keys, etc.).
 
-3. Run the Application with Docker Compose:
+#### 3. Build the Docker image:
 
-   ```bash
-   cd ..
-   docker compose up --build
-   ```
+```bash
+docker build -t blog-api .
+```
 
-   The server will be available at `http://localhost:8080`.
+#### 4. Run the application:
+
+```bash
+docker run -p 8080:8080 \
+  -v "$(pwd):/usr/src/app" \
+  -v /usr/src/app/node_modules \
+  --env-file ./.env \
+  blog-api
+```
+
+The server will be running at: [http://localhost:8080](http://localhost:8080)
 
 ---
 
-## 📚 API Documentation
+## API Documentation and Use Cases
 
-All endpoints are prefixed with `/api`.
+All endpoints are prefixed with `/api`. Protected routes require:
 
-### Authentication (`/auth`)
+```
+Authorization: Bearer <TOKEN>
+```
+
+### Authentication (`/api/auth`)
 
 #### `POST /auth/register`
 
 Registers a new user.
 
-* **Access:** Public
-* **Body:**
+```json
+{
+  "displayName": "John Doe",
+  "email": "john.doe@example.com",
+  "password": "a-strong-password"
+}
+```
 
-  ```json
-  {
-    "displayName": "John Doe",
-    "email": "john.doe@example.com",
-    "password": "a-strong-password"
-  }
-  ```
-* **Success Response (201):**
-
-  ```json
-  {
-    "_id": "...",
-    "displayName": "John Doe",
-    "email": "john.doe@example.com",
-    "role": "user",
-    "token": "your_jwt_token_here"
-  }
-  ```
+Use Case: Sign-up form that logs in the user on success.
 
 #### `POST /auth/login`
 
 Logs in an existing user.
-
-* **Access:** Public
-* **Body:**
-
-  ```json
-  {
-    "email": "john.doe@example.com",
-    "password": "a-strong-password"
-  }
-  ```
-* **Success Response (200):** Same as registration.
+Use Case: Login form that stores JWT in frontend on success.
 
 #### `GET /auth/google`
 
-Starts the Google OAuth flow. Redirects the user to Google's sign-in page.
-
-* **Access:** Public
+Starts the Google OAuth login flow.
+Use Case: Triggered by a "Login with Google" button.
 
 ---
 
-### Articles (`/articles`)
+### Articles (`/api/articles`)
 
 #### `GET /articles`
 
-Fetches a paginated list of all published articles.
+Fetch a paginated list of published articles.
+**Use Cases:**
 
-* **Access:** Public
-* **Query Parameters:**
-
-    * `tag` (string): Filter by tag
-    * `featured` (boolean): Only featured articles
-    * `sortBy` (string): Use `views` to sort by most viewed
-    * `page` (number): Page number (default: 1)
-    * `limit` (number): Articles per page (default: 10)
+* Blog homepage: latest posts
+* Homepage featured: `?featured=true&limit=3`
+* Category: `?tag=ui-design`
+* Popular: `?sortBy=views&limit=5`
 
 #### `GET /articles/:slug`
 
-Fetch a single article by its English or Indonesian slug.
+Fetch an article by slug.
+**Use Case:** Displaying the full article page.
 
-* **Access:** Public
+#### `POST /articles/:slug/view`
+
+Increment view count for an article.
+**Use Case:** Fire-and-forget after displaying the article.
 
 #### `POST /articles`
 
-Create a new article.
+Create an article (defaults to "draft").
 
 * **Access:** Admin Only
-* **Authorization Header:** `Bearer <ADMIN_TOKEN>`
-* **Body:** Complete article object (slug auto-generated)
+  **Use Case:** Saving a new draft or article.
 
 #### `PUT /articles/:id`
 
-Update an existing article by its ID.
+Update an existing article.
 
 * **Access:** Admin Only
-* **Authorization Header:** `Bearer <ADMIN_TOKEN>`
-* **Body:** Partial or full update object
+  **Use Case:** Editing and publishing updates.
 
 #### `DELETE /articles/:id`
 
-Delete an article by its ID.
+Delete an article.
 
 * **Access:** Admin Only
-* **Authorization Header:** `Bearer <ADMIN_TOKEN>`
+  **Use Case:** Admin removes unwanted content.
 
 ---
 
-### Uploads (`/upload`)
+### User Management (`/api/users`)
+
+#### `GET /users`
+
+Get all registered users.
+
+* **Access:** Admin Only
+  **Use Case:** Populate a user table in admin dashboard.
+
+#### `PUT /users/:id/role`
+
+Update user role.
+
+* **Access:** Admin Only
+
+```json
+{
+  "role": "admin"
+}
+```
+
+**Use Case:** Promote a user to admin.
+
+---
+
+### Uploads (`/api/upload`)
 
 #### `POST /upload/presigned-url`
 
-Generates a temporary presigned URL for uploading files directly to AWS S3.
+Generate a temporary S3 upload URL.
 
 * **Access:** Admin Only
-* **Authorization Header:** `Bearer <ADMIN_TOKEN>`
-* **Body:**
 
-  ```json
-  {
-    "fileName": "my-cool-image.jpg",
-    "fileType": "image/jpeg"
-  }
-  ```
-* **Success Response (200):**
+```json
+{
+  "fileName": "my-cool-image.jpg",
+  "fileType": "image/jpeg"
+}
+```
 
-  ```json
-  {
-    "uploadUrl": "https://s3...",
-    "finalImageUrl": "https://s3..."
-  }
-  ```
+**Use Case:** Direct upload for article images.
 
 ---
 
-## ☁️ Deployment
+## Deployment
 
-To deploy this backend, use the provided multi-stage Dockerfile. Build the image and run it on your preferred cloud service (e.g., AWS ECS, Google Cloud Run). Make sure to supply all required environment variables via your cloud provider's dashboard or secrets manager.
+To deploy this backend:
+
+1. Use the provided multi-stage `Dockerfile`
+2. Build the production image:
+
+```bash
+docker build -t blog-api-prod .
+```
+
+3. Push to your cloud provider (e.g., AWS ECS, Google Cloud Run)
+4. Set environment variables securely on your platform
+
+---
+
+For any questions or suggestions, feel free to open an issue or create a pull request.
