@@ -21,6 +21,7 @@ const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
 const articleRouter = require('./routes/articles');
 const uploadRouter = require('./routes/upload');
+const userRouter = require('./routes/users'); // <-- Add this line
 const app = express();
 
 app.use(cors());
@@ -48,6 +49,7 @@ app.use('/', indexRouter);
 app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/articles', articleRouter);
 app.use('/api/upload', uploadRouter);
+app.use('/api/users', userRouter);
 
 
 app.use(function(req, res, next) {
