@@ -21,21 +21,25 @@ router.get('/', async (req, res) => {
         if (tag) filter.tags = tag;
         if (featured) filter.isFeatured = true;
 
-        let sort = { createdAt: -1 }; // Default sort: newest first
+        let sort = { createdAt: -1 };
         if (sortBy === 'views') sort = { viewCount: -1 };
+
+        const pageNum = parseInt(page, 10);
+        const limitNum = parseInt(limit, 10);
+        const skip = (pageNum - 1) * limitNum;
 
         const articles = await Articles.find(filter)
             .sort(sort)
-            .limit(parseInt(limit))
-            .skip((parseInt(page) - 1) * parseInt(limit))
-            .populate('author', 'displayName'); // Attach author's name
+            .limit(limitNum)
+            .skip(skip)
+            .populate('author', 'displayName');
 
         const totalCount = await Articles.countDocuments(filter);
 
         res.json({
             articles,
-            currentPage: parseInt(page),
-            totalPages: Math.ceil(totalCount / parseInt(limit)),
+            currentPage: pageNum,
+            totalPages: Math.ceil(totalCount / limitNum),
             totalArticles: totalCount
         });
     } catch (error) {
@@ -157,6 +161,46 @@ router.put('/:id', protectApi, isAdmin, validateArticle, async (req, res) => {
         res.json(article);
     } catch (error) {
         res.status(400).json({ message: 'Error updating article', error: error.message });
+    }
+});
+
+router.get('/edit/:id', protectApi, isAdmin, async (req, res) => {
+    try {
+        const article = await Articles.findById(req.params.id);
+
+        if (!article) {
+            return res.status(404).json({ message: 'Article not found' });
+        }
+        res.json(article);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
+    }
+});
+
+
+/**
+ * @desc    Get relevant articles based on shared tags
+ * @route   GET /api/articles/relevant/:id
+ * @access  Public
+ */
+router.get('/relevant/:id', async (req, res) => {
+    try {
+        const currentArticle = await Articles.findById(req.params.id).select('tags');
+        if (!currentArticle || currentArticle.tags.length === 0) {
+            return res.json([]);
+        }
+
+        const relevantArticles = await Articles.find({
+            tags: { $in: currentArticle.tags },
+            status: 'published',
+            _id: { $ne: req.params.id }
+        })
+            .limit(2) // Get 2 relevant articles
+            .select('title slug featuredImage metaDescription');
+
+        res.json(relevantArticles);
+    } catch (error) {
+        res.status(500).json({ message: 'Server Error' });
     }
 });
 

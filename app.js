@@ -21,7 +21,8 @@ const indexRouter = require('./routes/index');
 const authRouter = require('./routes/auth');
 const articleRouter = require('./routes/articles');
 const uploadRouter = require('./routes/upload');
-const userRouter = require('./routes/users'); // <-- Add this line
+const userRouter = require('./routes/users');
+const dashboardRouter = require('./routes/dashboard');
 const app = express();
 
 app.use(cors());
@@ -50,8 +51,8 @@ app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/articles', articleRouter);
 app.use('/api/upload', uploadRouter);
 app.use('/api/users', userRouter);
-
-
+app.use('/api/dashboard', dashboardRouter);
+app.get('/api/test-route', (req, res) => res.json({ message: "TEST ROUTE IS WORKING" }));
 app.use(function(req, res, next) {
     next(createError(404));
 });
@@ -61,4 +62,5 @@ app.use(function(err, req, res, next) {
     res.json({ message: err.message });
 });
 
+console.log("--- Registered Routers ---", app._router.stack.map(r => r.route ? r.route.path : r.name));
 module.exports = app;

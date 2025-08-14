@@ -1,29 +1,20 @@
-# back-end/Dockerfile (Production Version)
-
-# --- Stage 1: Build Stage ---
-# This stage installs all dependencies and prepares our files
-FROM node:lts-alpine AS builder
-
-WORKDIR /usr/src/app
-
-COPY package*.json ./
-
-RUN npm install
-
-COPY . .
-
-# --- Stage 2: Production Stage ---
-# This stage creates the final, clean image
+# Use a standard Node.js image for development
 FROM node:lts-alpine
 
+# Set the working directory inside the container
 WORKDIR /usr/src/app
 
-COPY --from=builder /usr/src/app/package*.json ./
+# Copy package files first to leverage Docker's cache
+COPY package*.json ./
 
-RUN npm ci --omit=dev
+# Install all dependencies, including dev dependencies like nodemon
+RUN npm install
 
-COPY --from=builder /usr/src/app .
+# Copy the rest of your application's source code
+COPY . .
 
-EXPOSE ${PORT}
+# Expose the port your Express app runs on
+EXPOSE 8080
 
-CMD [ "node", "./bin/www" ]
+# The command to start the app using nodemon for hot reloading
+CMD [ "npm", "run", "dev" ]

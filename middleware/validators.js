@@ -34,7 +34,15 @@ exports.validateArticle = [
     body('content.id').notEmpty().withMessage('Indonesian content is required.'),
     body('metaDescription.en').notEmpty().withMessage('English meta description is required.'),
     body('metaDescription.id').notEmpty().withMessage('Indonesian meta description is required.'),
-    body('featuredImage.url').isURL().withMessage('A valid featured image URL is required.'),
+    body('featuredImage.url')
+        .custom((value) => {
+            try {
+                new URL(value);
+                return true;
+            } catch {
+                throw new Error('A valid featured image URL is required.');
+            }
+        }),
     body('featuredImage.altText.en').notEmpty().withMessage('English image alt text is required.'),
     body('featuredImage.altText.id').notEmpty().withMessage('Indonesian image alt text is required.'),
     body('status').isIn(['draft', 'published']).withMessage('Invalid status.'),
