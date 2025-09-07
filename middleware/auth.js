@@ -1,31 +1,26 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const {decode} = require("jsonwebtoken");
 
-// This middleware checks if a user is logged in via JWT
-exports.protectApi = async (req, res, next) => {
-    let token;
+function authMiddleware(req, res, next) {
+    const authHeader = req.header('Authorization');
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-        try {
-            token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select('-password');
-            next();
-        } catch (error) {
-            return res.status(401).json({ message: 'Not authorized, token failed' });
+    if (!authHeader) {
+        return res.status(401).json({ message: 'Akses ditolak. Tidak ada token yang diberikan.' });
+    }
+
+    try {
+        const token = authHeader.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ message: 'Format token tidak valid.' });
         }
-    }
 
-    if (!token) {
-        return res.status(401).json({ message: 'Not authorized, no token' });
-    }
-};
-
-// This middleware checks if the logged-in user is an admin
-exports.isAdmin = (req, res, next) => {
-    if (req.user && req.user.role === 'admin') {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.user = decoded;
         next();
-    } else {
-        res.status(403).json({ message: 'Not authorized as an admin' });
+
+    } catch (error) {
+        res.status(401).json({ message: 'Token tidak valid.' });
     }
-};
+}
+
+module.exports = authMiddleware;

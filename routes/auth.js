@@ -1,72 +1,64 @@
-// back-end/routes/auth.js (Corrected for Redirect Flow)
-
 const express = require('express');
-const router = express.Router();
-const User = require('../models/User');
+const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const passport = require('passport');
-const { validateRegistration, validateLogin } = require('../middleware/validators');
+const User = require('../models/User'); //
 
-const generateToken = (id, role) => {
-    return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-        expiresIn: '30d',
-    });
-};
+const router = express.Router();
 
-router.post('/register', validateRegistration, async (req, res) => {
-    const { displayName, email, password } = req.body;
+router.post('/register', async (req, res) => {
     try {
-        const userExists = await User.findOne({ email });
-        if (userExists) {
-            return res.status(400).json({ message: 'User already exists' });
+        const { username, password } = req.body;
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+            return res.status(400).json({ message: "Username sudah digunakan." });
         }
-        const user = await User.create({ displayName, email, password });
-        if (user) {
-            res.status(201).json({
-                _id: user._id,
-                displayName: user.displayName,
-                email: user.email,
-                role: user.role,
-                token: generateToken(user._id, user.role),
-            });
-        } else {
-            res.status(400).json({ message: 'Invalid user data' });
-        }
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const newUser = new User({
+            username: username,
+            password: hashedPassword
+        });
+        await newUser.save();
+
+        res.status(201).json({ message: "Pengguna berhasil dibuat." });
+
     } catch (error) {
-        res.status(500).json({ message: 'Server error during registration' });
+        res.status(500).json({ message: "Terjadi kesalahan pada server.", error: error.message });
     }
 });
 
-router.post('/login', validateLogin, async (req, res) => {
-    const { email, password } = req.body;
+router.post('/login', async (req, res) => {
     try {
-        const user = await User.findOne({ email });
-        if (user && (await user.matchPassword(password))) {
-            res.json({
-                _id: user._id,
-                displayName: user.displayName,
-                email: user.email,
-                role: user.role,
-                token: generateToken(user._id, user.role),
-            });
-        } else {
-            res.status(401).json({ message: 'Invalid email or password' });
+        const { username, password } = req.body;
+        const user = await User.findOne({ username });
+        if (!user) {
+            return res.status(400).json({ message: "Nama pengguna atau kata sandi salah." });
         }
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Nama pengguna atau kata sandi salah." });
+        }
+
+        const payload = {
+            id: user._id,
+            username: user.username
+        };
+
+        const token = jwt.sign(
+            payload,
+            process.env.JWT_SECRET,
+            { expiresIn: '1d' }
+        );
+
+        res.status(200).json({
+            message: "Login berhasil.",
+            token: token
+        });
+
     } catch (error) {
-        res.status(500).json({ message: 'Server error during login' });
+        res.status(500).json({ message: "Terjadi kesalahan pada server.", error: error.message });
     }
 });
-
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-router.get(
-    '/google/callback',
-    passport.authenticate('google', { failureRedirect: '/login', session: false }),
-    (req, res) => {
-        const token = generateToken(req.user._id, req.user.role);
-
-        res.redirect(`http://localhost:3000/auth/callback?token=${token}`);
-    }
-);
 
 module.exports = router;

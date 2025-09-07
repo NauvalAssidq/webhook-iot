@@ -1,20 +1,24 @@
-# Use a standard Node.js image for development
-FROM node:lts-alpine
+# Filename: Dockerfile
+
+# Start from an official, lightweight Node.js image
+FROM node:18-alpine
 
 # Set the working directory inside the container
-WORKDIR /usr/src/app
+WORKDIR /app
 
-# Copy package files first to leverage Docker's cache
+# Copy the package.json and package-lock.json files
+# This is done first to take advantage of Docker's layer caching.
+# If these files don't change, Docker won't need to reinstall dependencies on every build.
 COPY package*.json ./
 
-# Install all dependencies, including dev dependencies like nodemon
-RUN npm install
+# Install the application's dependencies
+RUN npm install --omit=dev
 
-# Copy the rest of your application's source code
+# Copy the rest of your application's source code (app.js, routes folder, etc.)
 COPY . .
 
-# Expose the port your Express app runs on
-EXPOSE 8080
+# Expose the port that the application runs on (from our app.js file)
+EXPOSE 3000
 
-# The command to start the app using nodemon for hot reloading
-CMD [ "npm", "run", "dev" ]
+# Define the command to start the application when the container launches
+CMD [ "node", "app.js" ]
