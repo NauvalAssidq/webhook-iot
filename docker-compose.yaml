@@ -1,9 +1,6 @@
-# Filename: docker-compose.yml (MODIFIED)
-
 version: '3.8'
 
 services:
-  # --- LAYANAN PRODUKSI (yang akan kita gunakan sekarang) ---
   app:
     build: .
     container_name: webhook_app
@@ -14,22 +11,19 @@ services:
       - ./.env
     depends_on:
       - mongo
-    # TIDAK ADA volume kode di sini. Kode "dipanggang" ke dalam gambar.
 
-  # --- LAYANAN PENGEMBANGAN (gunakan ini saat Anda membuat kode) ---
   dev:
     build: .
     container_name: webhook_app_dev
     ports:
-      - "3001:3000" # Jalankan di port yang berbeda agar tidak bentrok
+      - "3001:3000"
     env_file:
       - ./.env
     volumes:
-      - .:/app # Sinkronkan kode kita
-      - /app/node_modules # Jaga agar node_modules tetap terisolasi
+      - .:/app
+      - /app/node_modules
     depends_on:
       - mongo
-    # Gunakan perintah nodemon
     command: npm run dev
 
   mongo:
