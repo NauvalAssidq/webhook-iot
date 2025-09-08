@@ -68,9 +68,21 @@ const publishMessageSchema = Joi.object({
         })
 });
 
+const subscribeSchema = Joi.object({
+    params: Joi.object({
+        topicId: Joi.string()
+            .required()
+            .messages({
+                'any.required': 'ID Topik diperlukan di URL.'
+            })
+    })
+});
+
+
 module.exports = {
     registerSchema,
     loginSchema,
     createRoomSchema,
-    publishMessageSchema
+    publishMessageSchema,
+    subscribeSchema
 };
