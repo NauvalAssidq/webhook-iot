@@ -1,269 +1,187 @@
-# IoT Backend Service
+# IoT Backend Service (Webhook IOT)
 
-A Node.js backend service designed for IoT applications, providing real-time messaging capabilities through Server-Sent Events (SSE), user authentication, and room-based message broadcasting.
+A **Node.js backend service** designed for IoT applications. It provides **real-time messaging**, **user authentication**, and **room-based communication** with persistent storage and administrative management tools.
+
+---
 
 ## Features
 
-- **Real-time Messaging**: Server-Sent Events (SSE) for real-time communication
-- **User Authentication**: JWT-based authentication system with role-based access control
-- **Room Management**: Create and manage messaging rooms with unique topic IDs
-- **Message Broadcasting**: Publish messages to specific rooms and broadcast to subscribers
-- **Admin Panel**: Administrative endpoints for managing rooms and users
-- **MongoDB Integration**: Persistent storage for users, rooms, and messages
-- **Docker Support**: Containerized deployment with Docker Compose
-- **Input Validation**: Comprehensive request validation using Joi
+* **Real-Time Messaging**
+  Real-time communication using **Server-Sent Events (SSE)**.
+
+* **User Authentication and Authorization**
+  JWT-based authentication with **role-based access control**.
+
+* **Room Management**
+  Create, join, and manage rooms with unique topic IDs.
+
+* **Message Broadcasting**
+  Publish messages to specific rooms and broadcast them to connected subscribers.
+
+* **Admin Panel**
+  Endpoints for managing **users** and **rooms**.
+
+* **Persistent Storage**
+  MongoDB integration using **Mongoose** ODM.
+
+* **Validation Layer**
+  Comprehensive request validation with **Joi**.
+
+* **Containerized Deployment**
+  Ready-to-use **Docker** and **Docker Compose** setup.
+
+---
 
 ## Technology Stack
 
-- **Runtime**: Node.js 18
-- **Framework**: Express.js 5
-- **Database**: MongoDB with Mongoose ODM
-- **Authentication**: JSON Web Tokens (JWT)
-- **Password Hashing**: bcryptjs
-- **Validation**: Joi
-- **Development**: Nodemon for hot reloading
-- **Containerization**: Docker and Docker Compose
+* **Runtime**: Node.js 18
+* **Framework**: Express.js 5
+* **Database**: MongoDB + Mongoose
+* **Authentication**: JWT + Passport.js
+* **Validation**: Joi
+* **Deployment**: Docker and Docker Compose
 
-## Prerequisites
+---
 
-- Node.js 18 or higher
-- MongoDB instance
-- Docker and Docker Compose (for containerized deployment)
+## Project Structure
 
-## Installation
-
-### Local Development
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd iot-backend
+```
+webhook-iot-main/
+├── app.js                 # Main application entry point
+├── bin/www                # Server startup script
+├── config/passport.js     # Authentication strategies
+├── middleware/            # Custom middleware (auth, admin, validation)
+├── models/                # Mongoose models (User, Room, Message)
+├── routes/                # Express routes (auth, admin, rooms, index)
+├── public/                # Static files (HTML, CSS)
+├── seed-admin.js          # Script to seed initial admin user
+├── validation.js          # Centralized Joi validation
+├── Dockerfile             # Docker configuration
+├── docker-compose.yaml    # Multi-service Docker setup
+└── README.md              # Documentation
 ```
 
-2. Install dependencies:
+---
+
+## Installation and Setup
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/your-repo/webhook-iot-main.git
+cd webhook-iot-main
+```
+
+### 2. Install Dependencies
+
 ```bash
 npm install
 ```
 
-3. Create environment configuration:
-```bash
-cp .env.example .env
-```
+### 3. Environment Variables
 
-4. Configure environment variables in `.env`:
+Create a `.env` file in the root directory:
+
 ```env
-JWT_SECRET=your_jwt_secret_key
-MONGO_USER=your_mongodb_username
-MONGO_PASS=your_mongodb_password
-MONGO_HOST=localhost
-MONGO_PORT=27017
-MONGO_DB=webhook_db
 PORT=3000
+MONGO_URI=mongodb://localhost:27017/iotdb
+JWT_SECRET=your-secret-key
 ```
 
-5. Start the development server:
-```bash
-npm run dev
-```
-
-### Docker Deployment
-
-1. Ensure Docker and Docker Compose are installed on your system.
-
-2. Create the `.env` file with appropriate values for your environment.
-
-3. Build and start the services:
-```bash
-docker-compose up -d
-```
-
-4. For development with hot reloading:
-```bash
-docker-compose up dev
-```
-
-## Database Setup
-
-### Admin User Seeding
-
-To create an initial admin user, run the seeding script:
+### 4. Seed Admin User
 
 ```bash
 node seed-admin.js
 ```
 
-Default admin credentials:
-- Username: `adminwebhookiot@webhook.com`
-- Password: `adminwebhookiot123`
+### 5. Run the Application
 
-**Important**: Change these credentials immediately after first login in production environments.
-
-## API Documentation
-
-### Authentication Endpoints
-
-#### Register User
-```http
-POST /api/auth/register
-Content-Type: application/json
-
-{
-  "username": "your_username",
-  "password": "your_password"
-}
+```bash
+npm start
 ```
 
-#### Login
-```http
-POST /api/auth/login
-Content-Type: application/json
+Server will be available at:
+`http://localhost:3000`
 
-{
-  "username": "your_username",
-  "password": "your_password"
-}
+---
+
+## Run with Docker
+
+### Build and Start
+
+```bash
+docker-compose up --build
 ```
 
-### Room Management
+### Stop Containers
 
-#### Get User Rooms
-```http
-GET /api/rooms
-Authorization: Bearer <jwt_token>
+```bash
+docker-compose down
 ```
 
-#### Create Room
-```http
-POST /api/rooms
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
+---
 
-{
-  "name": "Room Name"
-}
+## API Endpoints
+
+### Auth Routes
+
+* `POST /auth/register` → Register new user
+* `POST /auth/login` → Login and receive JWT
+
+### Room Routes
+
+* `POST /rooms` → Create a room
+* `GET /rooms/:id` → Get room details
+* `POST /rooms/:id/messages` → Send message to room
+
+### SSE (Real-Time)
+
+* `GET /rooms/:id/stream` → Subscribe to room messages
+
+### Admin Routes
+
+* `GET /admin/users` → List users
+* `DELETE /admin/users/:id` → Delete user
+* `DELETE /admin/rooms/:id` → Delete room
+
+---
+
+## Usage Examples
+
+```bash
+# Register user
+curl -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"iotuser","password":"password123"}'
 ```
 
-### Message Broadcasting
-
-#### Subscribe to Room (SSE)
-```http
-GET /:topicId
+```bash
+# Subscribe to messages via SSE
+curl http://localhost:3000/rooms/123/stream
 ```
 
-This endpoint establishes a Server-Sent Events connection for real-time message reception.
+---
 
-#### Publish Message
-```http
-POST /:topicId
-Authorization: Bearer <jwt_token>
-Content-Type: application/json
+## Testing
 
-{
-  "message": "Your message content",
-  "data": "Additional data"
-}
+Run all tests (if available):
+
+```bash
+npm test
 ```
 
-### Admin Endpoints
-
-#### Get All Rooms (Admin Only)
-```http
-GET /api/admin/rooms
-Authorization: Bearer <admin_jwt_token>
-```
-
-#### Delete Room (Admin Only)
-```http
-DELETE /api/admin/rooms/:roomId
-Authorization: Bearer <admin_jwt_token>
-```
-
-## Project Structure
-
-```
-iot-backend/
-├── config/
-│   └── passport.js          # Passport configuration (not currently used)
-├── middleware/
-│   ├── admin.js             # Admin role verification
-│   ├── auth.js              # JWT authentication
-│   └── validate.js          # Request validation middleware
-├── models/
-│   ├── Message.js           # Message model
-│   ├── Room.js              # Room model
-│   └── User.js              # User model
-├── routes/
-│   ├── admin.js             # Admin routes
-│   ├── auth.js              # Authentication routes
-│   ├── index.js             # SSE and message routes
-│   └── rooms.js             # Room management routes
-├── public/                  # Static files
-├── app.js                   # Application entry point
-├── validation.js            # Joi validation schemas
-├── seed-admin.js            # Admin user seeding script
-├── docker-compose.yaml      # Docker Compose configuration
-├── Dockerfile               # Docker image configuration
-└── package.json             # Project dependencies and scripts
-```
-
-## Security Features
-
-- **JWT Authentication**: Secure token-based authentication
-- **Password Hashing**: bcryptjs for secure password storage
-- **Role-Based Access Control**: Separate admin and user permissions
-- **Input Validation**: Comprehensive request validation
-- **CORS Configuration**: Cross-origin resource sharing controls
-
-## Development
-
-### Available Scripts
-
-- `npm start`: Start the production server
-- `npm run dev`: Start the development server with hot reloading
-
-### Environment Configuration
-
-The application uses environment variables for configuration. Ensure all required variables are set in your `.env` file:
-
-- `JWT_SECRET`: Secret key for JWT token signing
-- `MONGO_USER`: MongoDB username
-- `MONGO_PASS`: MongoDB password
-- `MONGO_HOST`: MongoDB host
-- `MONGO_PORT`: MongoDB port
-- `MONGO_DB`: MongoDB database name
-- `PORT`: Application port (defaults to 3000)
-
-## Deployment Considerations
-
-### Production Deployment
-
-1. Ensure all environment variables are properly configured
-2. Use strong, unique values for `JWT_SECRET`
-3. Configure MongoDB with appropriate security settings
-4. Consider using a reverse proxy (nginx) for SSL termination
-5. Implement proper logging and monitoring
-6. Change default admin credentials immediately
-
-### Scaling
-
-The application maintains in-memory subscriber connections for SSE. For horizontal scaling:
-
-1. Consider implementing Redis or similar for shared state
-2. Use sticky sessions or connection affinity
-3. Implement proper session management for distributed deployments
+---
 
 ## Contributing
 
 1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+2. Create your feature branch (`git checkout -b feature/my-feature`)
+3. Commit your changes (`git commit -m "Add new feature"`)
+4. Push to the branch (`git push origin feature/my-feature`)
+5. Open a Pull Request
+
+---
 
 ## License
 
-This project is private and proprietary. All rights reserved.
-
-## Support
-
-For support and questions, please contact the development team or create an issue in the project reposito
+This project is licensed under the **MIT License**.
