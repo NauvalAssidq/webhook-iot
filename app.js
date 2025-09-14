@@ -35,6 +35,7 @@ const adminRoutes = require('./routes/admin');
 // App routes
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/:roomId/messages', require('./routes/messages'));
 app.use('/api/admin', adminRoutes);
 app.use('/', mainRoutes);
 

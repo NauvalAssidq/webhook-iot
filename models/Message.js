@@ -18,6 +18,8 @@ const messageSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+messageSchema.index({ room: 1, createdAt: -1 });
+
 const Message = mongoose.model('Message', messageSchema);
 
 module.exports = Message;
